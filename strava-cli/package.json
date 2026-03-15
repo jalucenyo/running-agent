@@ -1,0 +1,32 @@
+{
+  "name": "strava-cli",
+  "version": "1.0.0",
+  "description": "",
+  "author": "Jose Luceño",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "strava": "./bin/strava.ts"
+  },
+  "scripts": {
+    "dev": "tsx bin/strava.ts",
+    "start": "tsx bin/strava.ts",
+    "lint": "eslint src/",
+    "format": "prettier --write src/ bin/",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.1.0",
+    "arg": "5.0.2",
+    "tsx": "4.21.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.2.3",
+    "eslint": "^10.0.3",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.0"
+  }
+}
