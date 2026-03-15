@@ -9,15 +9,16 @@
     "strava": "./bin/strava.ts"
   },
   "scripts": {
-    "dev": "tsx bin/strava.ts",
+    "dev": "node --env-file=.env --import tsx bin/strava.ts",
     "start": "tsx bin/strava.ts",
     "lint": "eslint src/",
     "format": "prettier --write src/ bin/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@clack/prompts": "^1.1.0",
+    "@clack/prompts": "1.1.0",
     "arg": "5.0.2",
+    "open": "11.0.0",
     "tsx": "4.21.0",
     "zod": "4.3.6"
   },
