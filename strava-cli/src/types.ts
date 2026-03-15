@@ -7,3 +7,31 @@ export interface GlobalFlags {
 }
 
 export type OutputMode = 'interactive' | 'machine';
+
+export interface StravaAthlete {
+  id: number;
+  firstname: string;
+  lastname: string;
+  username: string;
+}
+
+export interface StravaTokenResponse {
+  token_type: string;
+  expires_at: number;
+  expires_in: number;
+  refresh_token: string;
+  access_token: string;
+  athlete: StravaAthlete;
+}
+
+export interface StravaAuthConfig {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number;
+  athlete: {
+    id: number;
+    firstname: string;
+    lastname: string;
+    username: string;
+  };
+}
