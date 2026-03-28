@@ -2,13 +2,15 @@ import arg from 'arg';
 import type { GlobalFlags } from './types.js';
 import { testCommand } from './commands/test.js';
 import { loginCommand } from './commands/login.js';
+import { activitiesCommand } from './commands/activities/index.js';
 
 const HELP = `
 Usage: strava [options] <command>
 
 Commands:
-  login     Authenticate with Strava via OAuth 2.0
-  test      Run a logger test to verify output modes
+  login        Authenticate with Strava via OAuth 2.0
+  activities   Manage and list Strava activities
+  test         Run a logger test to verify output modes
 
 Options:
   --help      Show this help message
@@ -20,6 +22,7 @@ Options:
 
 const commands: Record<string, (flags: GlobalFlags) => Promise<void>> = {
   login: loginCommand,
+  activities: activitiesCommand,
   test: testCommand,
 };
 
