@@ -1,8 +1,8 @@
 {
   "name": "strava-cli",
   "version": "1.0.0",
-  "description": "",
-  "author": "Jose Luceño",
+  "description": "Strava CLI tool to fetch and display your latest activities",
+  "author": "Lucenyo",
   "license": "MIT",
   "type": "module",
   "bin": {
