@@ -1,11 +1,13 @@
 import type { GlobalFlags } from '../../types.js';
 import { listActivities } from './list.js';
+import { exportActivity } from './export.js';
 
 const HELP = `
 Usage: strava activities <subcommand> [options]
 
 Subcommands:
   list    List your recent Strava activities
+  export  Export an activity to a FIT file
 
 Options:
   --help    Show this help message
@@ -26,6 +28,11 @@ export async function activitiesCommand(flags: GlobalFlags): Promise<void> {
 
   if (subcommand === 'list') {
     await listActivities(flags, subArgv);
+    return;
+  }
+
+  if (subcommand === 'export') {
+    await exportActivity(flags, subArgv);
     return;
   }
 
