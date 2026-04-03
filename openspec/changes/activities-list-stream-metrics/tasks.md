@@ -1,31 +1,16 @@
-## 1. Módulo de métricas de streams
+## 1. Ampliar schema de actividad
 
-- [ ] 1.1 Crear `src/utils/stream-metrics.ts` con tipos para el resultado de métricas (`StreamMetrics`, con campos para heartrate, altitude, cadence, power y pace)
-- [ ] 1.2 Implementar función de cálculo de métricas numéricas genéricas (min, max, avg) que ignore nulls
-- [ ] 1.3 Implementar cálculo de elevation gain (suma de deltas positivos en altitude stream)
-- [ ] 1.4 Implementar cálculo de pace medio (min/km) a partir de distance y time streams
-- [ ] 1.5 Implementar función principal `computeStreamMetrics(streams: ParsedStreams): StreamMetrics` que agregue todas las métricas
+- [ ] 1.1 Ampliar `stravaActivitySchema` en `schemas/strava-activity.ts` con campos opcionales: `average_heartrate`, `max_heartrate`, `has_heartrate`, `total_elevation_gain`, `elev_high`, `elev_low`, `average_cadence`, `average_watts`, `max_watts`, `weighted_average_watts`, `average_speed`, `max_speed`, `calories`, `suffer_score`
 
 ## 2. Migración de list.ts al logger
 
 - [ ] 2.1 Migrar `list.ts` para usar `createLogger(flags)`: reemplazar `console.log/error` por métodos del logger, añadir spinner para la carga de actividades, intro/outro
-- [ ] 2.2 Implementar salida JSON básica (`--json` sin `--detailed`): `logger.json(activities)` con el array de actividades
+- [ ] 2.2 Implementar salida JSON (`--json`): `logger.json(activities)` con el array completo de actividades incluyendo campos de métricas
 - [ ] 2.3 Verificar que `--raw` muestra tabla plana sin decoraciones interactivas
 
-## 3. Integración de --detailed en activities list
+## 3. Tabla con columnas adaptativas
 
-- [ ] 3.1 Añadir flag `--detailed` al parser de argumentos en `src/commands/activities/list.ts`
-- [ ] 3.2 Implementar lógica de fetch secuencial de streams por cada actividad cuando `--detailed` está activo, con spinner de progreso
-- [ ] 3.3 Llamar a `computeStreamMetrics` para cada actividad y asociar los resultados
-- [ ] 3.4 Manejar actividades sin streams (mostrar `—` en columnas de métricas)
-
-## 4. Tabla ampliada
-
-- [ ] 4.1 Ampliar `formatTable` para aceptar métricas opcionales y añadir columnas: HR avg, HR max, Elev gain, Cadence, Power avg, Pace avg
-- [ ] 4.2 Formatear valores de métricas con unidades y decimales apropiados (bpm, m, spm, W, min:ss/km)
-- [ ] 4.3 Mostrar `—` en columnas sin datos disponibles
-
-## 5. Soporte de modos de salida con --detailed
-
-- [ ] 5.1 Añadir campo `metrics` al output JSON cuando `--detailed` + `--json`
-- [ ] 5.2 Omitir spinner de progreso en modo no interactivo pero mantener fetch de streams y tabla extendida
+- [ ] 3.1 Ampliar `formatTable` con columnas de métricas: HR avg, HR max, Elev gain, Cadence, Power avg, Pace avg
+- [ ] 3.2 Implementar lógica de columnas adaptativas: ocultar columnas donde TODAS las actividades tienen `—`
+- [ ] 3.3 Calcular pace (min/km) a partir de `distance` y `moving_time`; pace máximo invirtiendo `max_speed`
+- [ ] 3.4 Formatear valores con unidades y decimales apropiados (bpm, m, spm, W, min:ss/km) y mostrar `—` para campos ausentes
