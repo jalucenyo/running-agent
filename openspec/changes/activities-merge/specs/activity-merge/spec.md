@@ -12,12 +12,14 @@ The CLI SHALL expose an `activities merge` subcommand accessible via `strava act
 - **THEN** the CLI SHALL display usage information for the merge subcommand and exit
 
 ### Requirement: User can select two activities to merge
-The CLI SHALL fetch recent activities and present them in an interactive select prompt. The user MUST select exactly two activities to merge.
+The CLI SHALL fetch recent activities and present them in an interactive select prompt. The user MUST select exactly two activities to merge. The activity list SHALL display title, date with time, sport type, distance, and sensor indicators (HR, power) to help identify duplicates.
 
 #### Scenario: Select two activities from recent list
 - **WHEN** the merge flow starts
 - **THEN** the CLI SHALL fetch recent activities from Strava
 - **AND** present them in a selectable list using `@clack/prompts`
+- **AND** each option SHALL show the activity name as the label
+- **AND** each option hint SHALL include date with time (extracted from `start_date_local`), sport type, distance, and sensor indicators: `[HR]` if `has_heartrate` is true, `[PWR]` if `average_watts` is present
 - **AND** the user SHALL select the first activity
 - **AND** the CLI SHALL present the remaining activities for second selection
 - **AND** the user SHALL select the second activity
@@ -41,9 +43,15 @@ After selecting two activities, the CLI SHALL fetch detailed data and streams fo
 ### Requirement: User can select which data to keep from each activity
 The CLI SHALL allow the user to choose, for each field and stream channel, which of the two source activities to take the value from.
 
+#### Scenario: Select activity name with custom option
+- **WHEN** the field selection for the activity name is presented
+- **THEN** the CLI SHALL offer three options: the name from activity A, the name from activity B, and "Escribir un título personalizado"
+- **AND** if the user selects the custom option, the CLI SHALL present a text input prompt
+- **AND** the user-entered title SHALL be used as the merged activity name
+
 #### Scenario: Select fields per activity
 - **WHEN** the comparison is displayed
-- **THEN** the CLI SHALL present each field where both activities have a value
+- **THEN** the CLI SHALL present each field (excluding name) where both activities have a value
 - **AND** the user SHALL select which activity's value to use for each field
 - **AND** for fields present in only one activity, that value SHALL be used automatically
 
