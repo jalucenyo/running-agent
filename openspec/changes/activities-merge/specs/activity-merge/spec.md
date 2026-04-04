@@ -60,6 +60,11 @@ The CLI SHALL allow the user to choose, for each field and stream channel, which
 - **THEN** for each stream channel available in both activities, the user SHALL select which activity to source it from
 - **AND** for stream channels present in only one activity, that source SHALL be used automatically
 
+#### Scenario: Select time base when both activities have time streams
+- **WHEN** both activities have a `time` stream
+- **THEN** the CLI SHALL ask the user which activity's `time` array to use as the temporal base
+- **AND** stream channels selected from the non-base activity SHALL be linearly interpolated to align with the base `time` array
+
 ### Requirement: User must confirm before creating the merged activity
 The CLI SHALL show a summary of the merged activity data and require explicit confirmation before creating it.
 
@@ -67,25 +72,31 @@ The CLI SHALL show a summary of the merged activity data and require explicit co
 - **WHEN** the user has completed field and stream selection
 - **THEN** the CLI SHALL display a summary of the resulting merged activity
 - **AND** ask for explicit confirmation to proceed
-- **AND** upon confirmation, create the activity in Strava via `POST /activities`
+- **AND** upon confirmation, generate a FIT file and upload it to Strava via `POST /uploads`
 
 #### Scenario: Cancel merge creation
 - **WHEN** the user declines confirmation
 - **THEN** the CLI SHALL abort without creating any activity and exit cleanly
 
-### Requirement: Merged activity is created in Strava
-The CLI SHALL create a new activity in Strava using the user-selected combination of fields from the two source activities.
+### Requirement: Merged activity is created in Strava via FIT upload
+The CLI SHALL generate a FIT file from the merged streams and upload it to Strava. After upload processing, the activity name and description SHALL be set via `PUT /activities/{id}`.
 
-#### Scenario: Successful activity creation
+#### Scenario: Successful FIT upload and activity creation
 - **WHEN** the user confirms the merge
-- **THEN** the CLI SHALL call `POST /activities` with the merged fields (name, sport_type, start_date_local, elapsed_time, distance, description)
-- **AND** `start_date_local` SHALL be offset by +60 seconds from the original to avoid Strava duplicate detection
-- **AND** the description SHALL include a note indicating the merge source activity IDs, which data came from each, and the original start time before offset
-- **AND** validate the API response with a Zod schema
+- **THEN** the CLI SHALL build `RecordPoint[]` from the merged stream channels aligned to the selected time base
+- **AND** generate a FIT buffer using the existing FIT encoder
+- **AND** upload the FIT file via `POST /uploads` with `data_type="fit"`
+- **AND** poll `GET /uploads/{id}` until processing completes
+- **AND** update the created activity via `PUT /activities/{id}` to set name and provenance description
 - **AND** display the created activity's ID and name
 
-#### Scenario: API error during creation
-- **WHEN** the Strava API returns an error during activity creation
+#### Scenario: Upload processing timeout
+- **WHEN** the upload processing does not complete within a reasonable time
+- **THEN** the CLI SHALL display the upload ID for manual follow-up
+- **AND** exit with code 1
+
+#### Scenario: API error during upload
+- **WHEN** the Strava API returns an error during FIT upload or processing
 - **THEN** the CLI SHALL display the error message and exit with code 1
 - **AND** no original activities SHALL be deleted
 

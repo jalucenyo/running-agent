@@ -18,8 +18,8 @@ The CLI uses `@clack/prompts` for interactive flows and `zod` for all API respon
 **Non-Goals:**
 - Automatic duplicate detection (user manually selects the two activities)
 - Merging more than two activities at once
-- Merging stream data at the sample level (e.g., interleaving GPS points) — streams are taken as whole channels from one source
 - Supporting `--json` / `--raw` output modes for the merge flow (inherently interactive)
+- Changing sport_type of the merged activity (it comes from the FIT file metadata)
 
 ## Decisions
 
@@ -31,23 +31,30 @@ The merge flow will first fetch recent activities (reusing the existing list log
 
 **Alternative considered**: Accept two activity IDs as CLI arguments. Rejected because it requires users to look up IDs manually and reduces the interactive UX.
 
-### 2. Stream channels are picked per-source, not interleaved
+### 2. Stream channels are picked per-source, with time-base interpolation
 
-For each stream type (heartrate, altitude, cadence, watts, latlng), the user selects which of the two activities should provide that channel. Streams are not merged at the sample level.
+For each stream type (heartrate, altitude, cadence, watts, latlng), the user selects which of the two activities should provide that channel. The user also selects which activity provides the `time` array as the temporal base.
 
-**Rationale**: Sample-level interleaving requires complex time alignment, resampling, and conflict resolution logic. Channel-level selection is straightforward and covers the primary use case (GPS from device A, heart rate from device B).
+When a selected stream channel comes from the non-base activity and its `time` array differs in length, the channel values are linearly interpolated to align with the base `time` array.
 
-**Alternative considered**: Point-by-point merging with timestamp alignment. Rejected as over-engineering for v1 — adds significant complexity with limited additional value.
+**Rationale**: Channel-level selection covers the primary use case (GPS from device A, heart rate from device B). Linear interpolation handles sampling rate differences between devices (e.g., 1s vs 5s) without requiring complex time alignment.
 
-### 3. New activity via Strava API `POST /activities` + `PUT /activities/{id}`
+**Alternative considered**: Only allow streams from the same time base. Rejected because it would prevent combining streams from devices with different sampling rates, which is the whole point of the merge.
 
-Strava's `POST /activities` creates a manual activity with basic fields (name, sport_type, start_date, elapsed_time, distance, description). Stream data cannot be uploaded via the API — the Strava API does not support attaching streams to manually created activities.
+### 3. Merged activity via FIT file upload (`POST /uploads`)
 
-**Decision**: The merged activity will contain the combined metadata fields (name, distance, times, sport_type, etc.) chosen by the user. A description note will indicate which source activities were merged and which data came from each. Stream data will be referenced in the description but cannot be programmatically attached.
+The merged activity is created by generating a FIT file containing the combined stream data and uploading it via `POST /uploads`. The existing FIT encoder (`fit/encoder.ts`, `fit/messages.ts`) is reused to build the file.
 
-**Rationale**: This is a limitation of the Strava API. The `POST /uploads` endpoint accepts FIT/GPX/TCX files but creates a new activity from the file's data, not allowing selective field merging. The merge workflow provides the most value when users can combine metadata (HR stats, elevation, power) from two sources into one clean activity record.
+The flow:
+1. Build `RecordPoint[]` from the merged streams (selected channels aligned to the chosen time base)
+2. Generate a FIT buffer using `FitEncoder` + `writeFitActivity()`
+3. Upload via `POST /uploads` (multipart form: file, data_type="fit", name, description)
+4. Poll `GET /uploads/{id}` until processing completes
+5. Use `PUT /activities/{id}` to set the final name and provenance description
 
-**Alternative considered**: Generate a FIT file with merged streams and upload via `POST /uploads`. This could be a future enhancement leveraging the existing FIT encoder, but adds significant complexity to v1 and doesn't support selective field-level merging.
+**Rationale**: `POST /activities` only creates a manual activity without stream data. FIT upload creates a full activity with all sensor streams, which is the core value of merging. The FIT encoder already exists and handles all stream types.
+
+**Alternative considered**: Keep `POST /activities` for metadata only. Rejected because losing stream data defeats the purpose of merging activities from multiple devices.
 
 ### 4. Confirmation before destructive operations
 
@@ -61,19 +68,10 @@ Follows the existing subcommand pattern in `commands/activities/`. New file `mer
 
 **Rationale**: Consistent with `activities list` and `activities export`.
 
-### 6. Start date offset to avoid duplicate detection
-
-Strava rejects activities it considers duplicates based on `start_date`, `sport_type`, `elapsed_time`, and `distance`. Since the merged activity shares these values with the originals (which may still exist), the CLI adds a +60 second offset to `start_date_local` before creating.
-
-The provenance description documents the original start time and the applied offset.
-
-**Rationale**: 60 seconds is enough to evade detection but negligible for training analysis. Safer than deleting originals before creation, which risks data loss if the create call fails.
-
-**Alternative considered**: Delete originals before creating the merged activity so the exact timestamp can be reused. Rejected because a failed `POST /activities` after deletion would cause irrecoverable data loss.
-
 ## Risks / Trade-offs
 
-- **[Strava API limitation]** Streams cannot be attached to manually created activities → The merged activity will lack stream-level data. **Mitigation**: Document this limitation clearly. Future enhancement could generate a FIT file with merged streams and use `POST /uploads`.
-- **[Rate limiting]** Fetching details + streams for two activities = 4 API calls minimum → **Mitigation**: Strava's rate limit is 100 requests per 15 minutes; 4 calls is negligible. Show spinner during fetches.
-- **[Data loss risk]** Deleting original activities is irreversible → **Mitigation**: Deletion is opt-in, requires explicit confirmation, and only offered after successful merge creation.
+- **[Upload processing delay]** `POST /uploads` is asynchronous — Strava processes the FIT file and creates the activity in the background (typically 5–30 seconds). **Mitigation**: Poll `GET /uploads/{id}` with a spinner. Timeout after a reasonable period and show the upload ID for manual follow-up.
+- **[Stream interpolation accuracy]** Linear interpolation of HR/cadence/power across different sampling rates may lose peaks or smooth data. **Mitigation**: This is acceptable for training analysis; the alternative of losing the data entirely is worse.
+- **[Rate limiting]** Fetching details + streams for two activities + upload + polling = ~6-8 API calls. **Mitigation**: Well within Strava's 100 requests/15 min limit.
+- **[Data loss risk]** Deleting original activities is irreversible → **Mitigation**: Deletion is opt-in, requires explicit confirmation, and only offered after successful upload processing.
 - **[Field conflicts]** Both activities have the same field with different values → **Mitigation**: Show both values side-by-side and let the user pick. For non-selectable computed fields (suffer_score, calories), take from the user's chosen primary activity.
