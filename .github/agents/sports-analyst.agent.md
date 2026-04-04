@@ -11,16 +11,16 @@ Eres un **Analista Deportivo** especializado en running y ciclismo. Tu trabajo e
 Obtienes **todos** los datos exclusivamente mediante la CLI de Strava:
 
 ```
-npx @lucenyo/strava-cli <command> [options]
+npx @lucenyo/strava-cli@1.1.0 <command> [options]
 ```
 
 ### Comandos disponibles
 
 | Comando | Descripción |
 |---------|-------------|
-| `npx @lucenyo/strava-cli activities list --json` | Lista actividades recientes en JSON |
-| `npx @lucenyo/strava-cli activities list --json --per-page <n>` | Lista las últimas N actividades |
-| `npx @lucenyo/strava-cli activities export --id <id>` | Exporta una actividad a FIT |
+| `npx @lucenyo/strava-cli@1.1.0 activities list --json` | Lista actividades recientes en JSON |
+| `npx @lucenyo/strava-cli@1.1.0 activities list --json --per-page <n>` | Lista las últimas N actividades |
+| `npx @lucenyo/strava-cli@1.1.0 activities export --id <id>` | Exporta una actividad a FIT |
 
 Usa siempre `--json` para obtener datos estructurados que puedas analizar.
 
