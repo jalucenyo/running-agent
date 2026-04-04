@@ -1,6 +1,6 @@
 {
   "name": "@lucenyo/strava-cli",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Strava CLI tool to fetch and display your latest activities",
   "author": "Lucenyo",
   "license": "MIT",
@@ -15,6 +15,7 @@
     "format": "prettier --write src/ bin/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  
   "dependencies": {
     "@clack/prompts": "1.1.0",
     "arg": "5.0.2",
