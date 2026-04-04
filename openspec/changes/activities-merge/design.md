@@ -61,6 +61,16 @@ Follows the existing subcommand pattern in `commands/activities/`. New file `mer
 
 **Rationale**: Consistent with `activities list` and `activities export`.
 
+### 6. Start date offset to avoid duplicate detection
+
+Strava rejects activities it considers duplicates based on `start_date`, `sport_type`, `elapsed_time`, and `distance`. Since the merged activity shares these values with the originals (which may still exist), the CLI adds a +60 second offset to `start_date_local` before creating.
+
+The provenance description documents the original start time and the applied offset.
+
+**Rationale**: 60 seconds is enough to evade detection but negligible for training analysis. Safer than deleting originals before creation, which risks data loss if the create call fails.
+
+**Alternative considered**: Delete originals before creating the merged activity so the exact timestamp can be reused. Rejected because a failed `POST /activities` after deletion would cause irrecoverable data loss.
+
 ## Risks / Trade-offs
 
 - **[Strava API limitation]** Streams cannot be attached to manually created activities → The merged activity will lack stream-level data. **Mitigation**: Document this limitation clearly. Future enhancement could generate a FIT file with merged streams and use `POST /uploads`.

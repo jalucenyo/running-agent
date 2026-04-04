@@ -79,7 +79,8 @@ The CLI SHALL create a new activity in Strava using the user-selected combinatio
 #### Scenario: Successful activity creation
 - **WHEN** the user confirms the merge
 - **THEN** the CLI SHALL call `POST /activities` with the merged fields (name, sport_type, start_date_local, elapsed_time, distance, description)
-- **AND** the description SHALL include a note indicating the merge source activity IDs and which data came from each
+- **AND** `start_date_local` SHALL be offset by +60 seconds from the original to avoid Strava duplicate detection
+- **AND** the description SHALL include a note indicating the merge source activity IDs, which data came from each, and the original start time before offset
 - **AND** validate the API response with a Zod schema
 - **AND** display the created activity's ID and name
 
