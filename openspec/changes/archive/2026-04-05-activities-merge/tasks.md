@@ -48,20 +48,28 @@
 
 ## 9. FIT Upload Integration
 
-- [ ] 9.1 Add `uploadFitFile(buffer, name, description, accessToken)` helper that calls `POST /uploads` with multipart form data (file, data_type="fit")
-- [ ] 9.2 Add Zod schemas for upload response and upload status polling (`GET /uploads/{id}`)
-- [ ] 9.3 Add `pollUploadStatus(uploadId, accessToken)` helper that polls until processing completes or timeout
-- [ ] 9.4 Add `updateActivity(id, { name, description }, accessToken)` helper that calls `PUT /activities/{id}`
+- [x] 9.1 Add `uploadFitFile(buffer, name, description, accessToken)` helper that calls `POST /uploads` with multipart form data (file, data_type="fit")
+- [x] 9.2 Add Zod schemas for upload response and upload status polling (`GET /uploads/{id}`)
+- [x] 9.3 Add `pollUploadStatus(uploadId, accessToken)` helper that polls until processing completes or timeout
+- [x] 9.4 Add `updateActivity(id, { name, description }, accessToken)` helper that calls `PUT /activities/{id}`
 
 ## 10. Stream Merging & Interpolation
 
-- [ ] 10.1 Add time-base selection prompt: when both activities have `time` streams, ask user which to use as base
-- [ ] 10.2 Implement `interpolateStream(sourceTime, sourceValues, targetTime)` utility for linear interpolation of numeric stream channels
-- [ ] 10.3 Implement `interpolateLatLng(sourceTime, sourceValues, targetTime)` utility for linear interpolation of GPS coordinates
-- [ ] 10.4 Build merged `RecordPoint[]` from selected stream channels, interpolating ones from the non-base activity
+- [x] 10.1 Add time-base selection prompt: when both activities have `time` streams, ask user which to use as base
+- [x] 10.2 Implement `interpolateStream(sourceTime, sourceValues, targetTime)` utility for linear interpolation of numeric stream channels
+- [x] 10.3 Implement `interpolateLatLng(sourceTime, sourceValues, targetTime)` utility for linear interpolation of GPS coordinates
+- [x] 10.4 Build merged `RecordPoint[]` from selected stream channels, interpolating ones from the non-base activity
 
 ## 11. Replace POST /activities with FIT Upload
 
-- [ ] 11.1 Replace `createActivity()` call in merge.ts with: build FIT buffer → upload → poll → update name/description
-- [ ] 11.2 Remove the +60s start_date_local offset (no longer needed)
-- [ ] 11.3 Update confirmation summary to reflect FIT upload flow
+- [x] 11.1 Replace `createActivity()` call in merge.ts with: build FIT buffer → upload → poll → update name/description
+- [x] 11.2 Remove the +60s start_date_local offset (no longer needed)
+- [x] 11.3 Update confirmation summary to reflect FIT upload flow
+
+## 12. Upload Error Handling
+
+- [x] 12.1 Improve upload error display: strip HTML tags, detect "duplicate of" errors, show user-friendly messages, fix spinner lifecycle in catch block
+
+## 13. Duplicate Avoidance
+
+- [x] 13.1 Add `DUPLICATE_AVOIDANCE_OFFSET_S = 1` constant and apply it to `startUnix` when building the FIT file, so all timestamps shift +1s and Strava does not reject the upload as a duplicate
