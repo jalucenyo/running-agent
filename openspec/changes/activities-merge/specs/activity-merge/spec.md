@@ -97,8 +97,26 @@ The CLI SHALL generate a FIT file from the merged streams and upload it to Strav
 
 #### Scenario: API error during upload
 - **WHEN** the Strava API returns an error during FIT upload or processing
-- **THEN** the CLI SHALL display the error message and exit with code 1
+- **THEN** the CLI SHALL strip HTML tags from the error message
+- **AND** display a clean, user-friendly error message
+- **AND** exit with code 1
 - **AND** no original activities SHALL be deleted
+
+#### Scenario: Duplicate activity detected during upload
+- **WHEN** Strava returns a processing error containing "duplicate of"
+- **THEN** the CLI SHALL extract the conflicting activity name from the error
+- **AND** display a specific message: the upload was rejected because a duplicate activity exists
+- **AND** suggest deleting the original before retrying
+- **AND** exit with code 1
+
+### Requirement: Merged activity avoids duplicate detection
+The merged FIT file SHALL offset its start timestamp by a small amount to prevent Strava from rejecting it as a duplicate of an existing activity.
+
+#### Scenario: Timestamp offset avoids duplicate rejection
+- **WHEN** the merged FIT file is generated
+- **THEN** the start timestamp SHALL be offset by +1 second from the base activity's `start_date`
+- **AND** all FIT timestamps (session, lap, activity, and record points) SHALL reflect the offset
+- **AND** no original activities SHALL be deleted before the upload
 
 ### Requirement: User can optionally delete original activities
 After a successful merge, the CLI SHALL offer to delete the two original activities.

@@ -68,6 +68,14 @@ Follows the existing subcommand pattern in `commands/activities/`. New file `mer
 
 **Rationale**: Consistent with `activities list` and `activities export`.
 
+### 6. Duplicate avoidance via +1 second timestamp offset
+
+The merged FIT file reuses the `start_date` of the time-base activity. Since that activity still exists in Strava, the upload is rejected as a duplicate. To avoid this, the start timestamp is offset by +1 second (`DUPLICATE_AVOIDANCE_OFFSET_S = 1`). The offset propagates automatically to all FIT timestamps (session, lap, activity, and every record point).
+
+**Rationale**: Minimal, predictable change. One second is imperceptible in training data but sufficient to bypass Strava's exact-timestamp duplicate detection. No activities are deleted before the upload — deletion remains opt-in after successful creation.
+
+**Alternative considered**: Delete the base activity before uploading. Rejected because the user prefers no deletions until explicitly confirmed, and pre-deletion carries data-loss risk if the upload fails.
+
 ## Risks / Trade-offs
 
 - **[Upload processing delay]** `POST /uploads` is asynchronous — Strava processes the FIT file and creates the activity in the background (typically 5–30 seconds). **Mitigation**: Poll `GET /uploads/{id}` with a spinner. Timeout after a reasonable period and show the upload ID for manual follow-up.
