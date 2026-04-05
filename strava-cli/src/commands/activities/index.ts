@@ -1,6 +1,7 @@
 import type { GlobalFlags } from '../../types.js';
 import { listActivities } from './list.js';
 import { exportActivity } from './export.js';
+import { mergeActivities } from './merge.js';
 
 const HELP = `
 Usage: strava activities <subcommand> [options]
@@ -8,6 +9,7 @@ Usage: strava activities <subcommand> [options]
 Subcommands:
   list    List your recent Strava activities
   export  Export an activity to a FIT file
+  merge   Merge two duplicate activities into one
 
 Options:
   --help    Show this help message
@@ -33,6 +35,11 @@ export async function activitiesCommand(flags: GlobalFlags): Promise<void> {
 
   if (subcommand === 'export') {
     await exportActivity(flags, subArgv);
+    return;
+  }
+
+  if (subcommand === 'merge') {
+    await mergeActivities(flags, subArgv);
     return;
   }
 

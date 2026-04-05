@@ -66,7 +66,8 @@ export async function loginCommand(flags: GlobalFlags): Promise<void> {
   authUrl.searchParams.set('client_id', clientId);
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
-  authUrl.searchParams.set('scope', 'read,activity:read_all');
+  authUrl.searchParams.set('approval_prompt', 'force');
+  authUrl.searchParams.set('scope', 'read,activity:read_all,activity:write');
 
   if (logger.mode === 'machine') {
     logger.json({ event: 'auth_url', url: authUrl.toString() });
