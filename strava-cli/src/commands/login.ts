@@ -1,8 +1,8 @@
 import { createServer } from 'http';
 import open from 'open';
-import type { GlobalFlags } from '../types.js';
+import type { GlobalFlags, StravaAppConfig } from '../types.js';
 import { createLogger } from '../utils/logger.js';
-import { saveTokens, loadTokens } from '../utils/auth.js';
+import { saveTokens, loadTokens, loadConfig, saveConfig } from '../utils/auth.js';
 import { stravaTokenResponseSchema } from '../schemas/strava-auth.js';
 
 const REDIRECT_URI = 'http://localhost:3000/callback';
@@ -26,19 +26,68 @@ const ERROR_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+async function resolveCredentials(flags: GlobalFlags): Promise<{ client_id: string; client_secret: string }> {
+  const logger = createLogger(flags);
+
+  // 1. Try env vars
+  const clientId = process.env.STRAVA_CLIENT_ID;
+  const clientSecret = process.env.STRAVA_CLIENT_SECRET;
+  if (clientId && clientSecret) {
+    return { client_id: clientId, client_secret: clientSecret };
+  }
+
+  // 2. Try load from config
+  const config = await loadConfig();
+  if (config) {
+    return config;
+  }
+
+  // 3. Prompt interactively
+  if (logger.mode === 'machine') {
+    logger.error('Missing Strava app credentials. Set STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET environment variables or configure interactively.');
+    process.exit(1);
+  }
+
+  // Show guide message
+  logger.info('Para obtener tus credenciales de Strava, visita: https://www.strava.com/settings/api');
+
+  const { text } = await import('@clack/prompts');
+  try {
+    const clientIdInput = await text({
+      message: 'Ingresa tu Client ID de Strava:',
+      validate: (value) => {
+        if (!value.trim()) return 'Client ID es requerido';
+        if (!/^\d+$/.test(value)) return 'Client ID debe ser un número';
+        return undefined;
+      },
+    });
+
+    const clientSecretInput = await text({
+      message: 'Ingresa tu Client Secret de Strava:',
+      validate: (value) => {
+        if (!value.trim()) return 'Client Secret es requerido';
+        return undefined;
+      },
+    });
+
+    const appConfig: StravaAppConfig = {
+      client_id: clientIdInput,
+      client_secret: clientSecretInput,
+    };
+
+    await saveConfig(appConfig);
+    return appConfig;
+  } catch {
+    // Cancellation (Ctrl+C)
+    logger.error('Configuración cancelada.');
+    process.exit(1);
+  }
+}
+
 export async function loginCommand(flags: GlobalFlags): Promise<void> {
   const logger = createLogger(flags);
 
-  const clientId = process.env.STRAVA_CLIENT_ID;
-  const clientSecret = process.env.STRAVA_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    logger.error(
-      'Missing required environment variables: STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET must be set.',
-    );
-    process.exitCode = 1;
-    return;
-  }
+  const { client_id: clientId, client_secret: clientSecret } = await resolveCredentials(flags);
 
   const existing = await loadTokens();
   if (existing) {

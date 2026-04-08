@@ -35,3 +35,8 @@ export interface StravaAuthConfig {
     username: string;
   };
 }
+
+export interface StravaAppConfig {
+  client_id: string;
+  client_secret: string;
+}

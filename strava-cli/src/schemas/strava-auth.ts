@@ -22,3 +22,8 @@ export const stravaAuthConfigSchema = z.object({
   expires_at: z.number(),
   athlete: stravaAthleteSchema,
 });
+
+export const stravaAppConfigSchema = z.object({
+  client_id: z.string(),
+  client_secret: z.string(),
+});
