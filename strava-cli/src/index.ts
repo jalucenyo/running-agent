@@ -13,7 +13,7 @@ Commands:
   login        Authenticate with Strava via OAuth 2.0
   activities   Manage and list Strava activities
   profile      Show or set your athlete profile
-  agent        Install AI skills for supported orchestrators
+  agent        Install AI skills for the current project
   test         Run a logger test to verify output modes
 
 Options:

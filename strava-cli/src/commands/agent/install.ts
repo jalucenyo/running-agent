@@ -1,9 +1,17 @@
 import fs from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { select, confirm, isCancel } from '@clack/prompts';
+import { confirm, isCancel } from '@clack/prompts';
 import type { GlobalFlags } from '../../types.js';
 import { createLogger } from '../../utils/logger.js';
-import { orchestrators, type Orchestrator } from './orchestrators.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const TEMPLATE_DIR = path.resolve(
+  __dirname,
+  '../../templates/skills/sports-analyst',
+);
+const DEST_DIR = '.agents/skills/sports-analyst';
 
 async function destExists(destPath: string): Promise<boolean> {
   try {
@@ -20,63 +28,33 @@ export async function agentInstall(
 ): Promise<void> {
   const logger = createLogger(flags);
 
-  let orchestrator: Orchestrator | undefined;
+  const legacyOrchestratorArg = argv.find((a) => !a.startsWith('-'));
+  if (legacyOrchestratorArg) {
+    logger.warn(
+      'El argumento de orquestador ya no se usa. Instalando en .agents/skills.',
+    );
+  }
 
-  if (logger.mode === 'machine') {
-    // Accept orchestrator id as positional argument
-    const id = argv.find((a) => !a.startsWith('-'));
-    if (!id) {
-      logger.error(
-        'Orchestrator id required in machine mode. Available: ' +
-          orchestrators.map((o) => o.id).join(', '),
-      );
-      process.exitCode = 1;
-      return;
-    }
-    orchestrator = orchestrators.find((o) => o.id === id);
-    if (!orchestrator) {
-      logger.error(
-        `Unknown orchestrator: "${id}". Available: ${orchestrators.map((o) => o.id).join(', ')}`,
-      );
-      process.exitCode = 1;
-      return;
-    }
-  } else {
-    // Interactive select
+  if (logger.mode === 'interactive') {
     logger.intro('agent install');
-
-    const selected = await select({
-      message: 'Selecciona un orquestador:',
-      options: orchestrators.map((o) => ({ value: o.id, label: o.label })),
-    });
-
-    if (isCancel(selected)) {
-      return;
-    }
-
-    orchestrator = orchestrators.find((o) => o.id === selected);
-    if (!orchestrator) {
-      process.exitCode = 1;
-      return;
-    }
   }
 
   const installRoot = process.env.INIT_CWD ?? process.cwd();
-  const destPath = path.resolve(installRoot, orchestrator.destDir);
+  const destPath = path.resolve(installRoot, DEST_DIR);
 
   // Confirm overwrite if destination has content
   const alreadyExists = await destExists(destPath);
   if (alreadyExists) {
     if (logger.mode === 'machine') {
       logger.error(
-        `Destination "${orchestrator.destDir}" already exists. Remove it before reinstalling.`,
+        `Destination "${DEST_DIR}" already exists. Remove it before reinstalling.`,
       );
       process.exitCode = 1;
       return;
     }
 
     const ok = await confirm({
-      message: `El directorio "${orchestrator.destDir}" ya existe. ¿Sobrescribir?`,
+      message: `El directorio "${DEST_DIR}" ya existe. ¿Sobrescribir?`,
     });
 
     if (isCancel(ok) || !ok) {
@@ -85,24 +63,22 @@ export async function agentInstall(
   }
 
   const spinner = logger.spinner();
-  spinner.start(`Instalando ${orchestrator.label}...`);
+  spinner.start('Instalando sports-analyst skill...');
 
   try {
     await fs.mkdir(path.dirname(destPath), { recursive: true });
-    await fs.cp(orchestrator.templateDir, destPath, { recursive: true });
-    spinner.stop(
-      `${orchestrator.label} instalado en "${orchestrator.destDir}"`,
-    );
+    await fs.cp(TEMPLATE_DIR, destPath, { recursive: true });
+    spinner.stop(`sports-analyst instalado en "${DEST_DIR}"`);
   } catch (err) {
     spinner.error(
-      `Error instalando ${orchestrator.label}: ${err instanceof Error ? err.message : String(err)}`,
+      `Error instalando sports-analyst: ${err instanceof Error ? err.message : String(err)}`,
     );
     process.exitCode = 1;
     return;
   }
 
   if (logger.mode === 'machine') {
-    logger.json({ orchestrator: orchestrator.id, destination: destPath });
+    logger.json({ destination: destPath });
   } else {
     logger.outro('Instalación completada.');
   }
