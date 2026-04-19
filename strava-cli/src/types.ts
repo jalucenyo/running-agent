@@ -40,3 +40,12 @@ export interface StravaAppConfig {
   client_id: string;
   client_secret: string;
 }
+
+export type AthleteSex = 'male' | 'female';
+
+export interface StravaProfile {
+  age: number;
+  sex: AthleteSex;
+  weight: number;
+  height: number;
+}

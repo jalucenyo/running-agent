@@ -7,8 +7,8 @@ import { orchestrators, type Orchestrator } from './orchestrators.js';
 
 async function destExists(destPath: string): Promise<boolean> {
   try {
-    const entries = await fs.readdir(destPath);
-    return entries.length > 0;
+    await fs.stat(destPath);
+    return true;
   } catch {
     return false;
   }
@@ -61,14 +61,15 @@ export async function agentInstall(
     }
   }
 
-  const destPath = path.resolve(process.cwd(), orchestrator.destDir);
+  const installRoot = process.env.INIT_CWD ?? process.cwd();
+  const destPath = path.resolve(installRoot, orchestrator.destDir);
 
   // Confirm overwrite if destination has content
   const alreadyExists = await destExists(destPath);
   if (alreadyExists) {
     if (logger.mode === 'machine') {
       logger.error(
-        `Destination "${orchestrator.destDir}" already exists. Use --force to overwrite.`,
+        `Destination "${orchestrator.destDir}" already exists. Remove it before reinstalling.`,
       );
       process.exitCode = 1;
       return;
@@ -87,6 +88,7 @@ export async function agentInstall(
   spinner.start(`Instalando ${orchestrator.label}...`);
 
   try {
+    await fs.mkdir(path.dirname(destPath), { recursive: true });
     await fs.cp(orchestrator.templateDir, destPath, { recursive: true });
     spinner.stop(
       `${orchestrator.label} instalado en "${orchestrator.destDir}"`,

@@ -5,7 +5,7 @@ const HELP = `
 Usage: strava agent <subcommand> [options]
 
 Subcommands:
-  install  Install an AI agent and skills for a supported orchestrator
+  install  Install the sports-analyst skill for a supported orchestrator
 
 Options:
   --help    Show this help message
