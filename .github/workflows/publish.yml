@@ -1,0 +1,58 @@
+name: Publish to npm
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: strava-cli/package-lock.json
+
+      - name: Detect version change
+        id: version_check
+        working-directory: strava-cli
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED_VERSION=$(npm view @lucenyo/strava-cli version 2>/dev/null || true)
+
+          if [[ -z "$PUBLISHED_VERSION" ]]; then
+            echo "No published version found in npm. Proceeding with first publish."
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$LOCAL_VERSION" != "$PUBLISHED_VERSION" ]]; then
+            echo "Version changed from $PUBLISHED_VERSION to $LOCAL_VERSION."
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version unchanged ($LOCAL_VERSION). Skipping publish."
+            echo "version_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        working-directory: strava-cli
+        run: npm ci
+
+      - name: Publish package
+        if: steps.version_check.outputs.version_changed == 'true'
+        working-directory: strava-cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public

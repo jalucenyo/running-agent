@@ -8,6 +8,11 @@
   "bin": {
     "strava": "./bin/strava.ts"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md"
+  ],
   "scripts": {
     "dev": "node --env-file=.env --import tsx bin/strava.ts",
     "start": "tsx bin/strava.ts",
