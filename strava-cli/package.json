@@ -5,6 +5,10 @@
   "author": "Lucenyo",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jalucenyo/running-agent.git"
+  },
   "bin": {
     "strava": "./bin/strava.ts"
   },
