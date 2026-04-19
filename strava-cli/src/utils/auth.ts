@@ -1,8 +1,13 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
-import type { StravaAuthConfig, StravaAppConfig } from '../types.js';
+import type {
+  StravaAuthConfig,
+  StravaAppConfig,
+  StravaProfile,
+} from '../types.js';
 import { stravaAuthConfigSchema, stravaAppConfigSchema } from '../schemas/strava-auth.js';
+import { stravaProfileSchema } from '../schemas/strava-profile.js';
 
 export function getConfigDir(): string {
   return join(homedir(), '.config', 'strava-ai-cli');
@@ -57,6 +62,29 @@ export async function loadConfig(): Promise<StravaAppConfig | null> {
     const content = await fs.readFile(getConfigFilePath(), 'utf-8');
     const parsed = JSON.parse(content);
     return stravaAppConfigSchema.parse(parsed);
+  } catch {
+    return null;
+  }
+}
+
+function getProfileFilePath(): string {
+  return join(getConfigDir(), 'profile.json');
+}
+
+export async function saveProfile(profile: StravaProfile): Promise<void> {
+  const configDir = getConfigDir();
+  await fs.mkdir(configDir, { recursive: true, mode: 0o700 });
+  await fs.writeFile(getProfileFilePath(), JSON.stringify(profile, null, 2), {
+    encoding: 'utf-8',
+    mode: 0o600,
+  });
+}
+
+export async function loadProfile(): Promise<StravaProfile | null> {
+  try {
+    const content = await fs.readFile(getProfileFilePath(), 'utf-8');
+    const parsed = JSON.parse(content);
+    return stravaProfileSchema.parse(parsed);
   } catch {
     return null;
   }

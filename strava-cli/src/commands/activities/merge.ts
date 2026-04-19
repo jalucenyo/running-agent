@@ -94,10 +94,6 @@ function formatSeconds(secs: number): string {
     : `${m}m ${s.toString().padStart(2, '0')}s`;
 }
 
-function activityLabel(a: StravaActivityDetail): string {
-  return `${a.name} (${a.start_date_local.slice(0, 10)} · ${a.sport_type})`;
-}
-
 function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '');
 }
@@ -223,9 +219,6 @@ export async function mergeActivities(
   });
   if (isCancel(secondSelected)) { logger.outro('Cancelado.'); return; }
   const secondId = secondSelected as number;
-
-  const firstName = activities.find((a) => a.id === firstId)?.name ?? String(firstId);
-  const secondName = activities.find((a) => a.id === secondId)?.name ?? String(secondId);
 
   // ── 3. Fetch detail + streams for both ──────────────────────────────────
   const spinner2 = logger.spinner();
@@ -488,10 +481,8 @@ export async function mergeActivities(
   uploadSpinner.start('Subiendo archivo FIT a Strava…');
 
   let createdId: number;
-  let uploadId: number | undefined;
   try {
     const upload = await uploadFitFile(fitBuffer, mergedName, mergeNote, tokens.access_token);
-    uploadId = upload.id;
     uploadSpinner.stop(`Subida iniciada (upload ID: ${upload.id}). Esperando procesamiento…`);
 
     const pollSpinner = logger.spinner();

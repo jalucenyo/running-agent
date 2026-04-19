@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { stravaActivityDetailSchema } from '../schemas/strava-activity-detail.js';
 import {
   stravaStreamsResponseSchema,
