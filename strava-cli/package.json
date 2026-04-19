@@ -1,6 +1,6 @@
 {
   "name": "@lucenyo/strava-cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Strava CLI tool to fetch and display your latest activities",
   "author": "Lucenyo",
   "license": "MIT",
